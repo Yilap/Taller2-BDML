@@ -46,3 +46,11 @@ m_test <- merge(test_hogares, test_personas, by = "id")
 merged_train <- merge(train_hogares, train_personas, by = "id")
 rm(test_hogares, test_personas,train_hogares, train_personas)
 
+
+
+# Classification Problem -------------------------------------------------------
+
+set.seed(1011)
+
+
+
