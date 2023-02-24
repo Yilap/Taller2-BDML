@@ -13,14 +13,15 @@ rm(list = ls())
 #install.packages("httr")
 
 
-require("pacman")
-p_load("httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr")
+library("pacman") # para cargar paquetes
+p_load("httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr","AER","MLmetrics","smotefamily")
 
 
 # Importing Dataset -------------------------------------------------------
 
 # Se importan los 4 archivos a usar
 
+#Compu Betina
 #test_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_hogares.csv")
 #train_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_hogares.csv")
 #test_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_personas.csv")
@@ -31,7 +32,7 @@ test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hoga
 train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
 test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
 train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
-#sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
+# sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
 
 
 # Los datos se guardan como un archivo binario R (rds) usando saveRDS()
@@ -42,15 +43,32 @@ train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_p
 
 #hacemos los merged 
 
-m_test <- merge(test_hogares, test_personas, by = "id")
-merged_train <- merge(train_hogares, train_personas, by = "id")
-rm(test_hogares, test_personas,train_hogares, train_personas)
+#m_test <- merge(test_hogares, test_personas, by = "id")
+#m_train <- merge(train_hogares, train_personas, by = "id")
+#rm(test_hogares, test_personas,train_hogares, train_personas)
 
 
 
 # Classification Problem -------------------------------------------------------
 
-set.seed(1011)
+set.seed(1234)
+
+train_hogares <- train_hogares %>%
+  mutate(Pobre = factor(train_hogares$Pobre, 
+                          levels = c(0, 1),
+                          labels = c("No pobre", "Pobre")))
+                            
+# Hacemos gráfica para comparar cuantos pobres y no pobres hay, se puede observar que la base de entrenamiento es
+#desbalanceada pues hay muchos menos pobres que no pobres
+
+ggplot(train_hogares, aes(x = Pobre))+ 
+  geom_bar(fill = "darkblue")+
+  theme_bw()+
+  labs(x= "", y = "Frecuencia", title = "el hogar es pobre")
+
+# nos muestra que la muestra es desbalanceada, tenemos que balancearla pues 80% son no pobres y 20% pobres.
+
+prop.table(table(train_hogares$Pobre)) 
 
 
 
