@@ -60,15 +60,19 @@ train_hogares <- train_hogares %>%
                             
 # Hacemos gráfica para comparar cuantos pobres y no pobres hay, se puede observar que la base de entrenamiento es
 #desbalanceada pues hay muchos menos pobres que no pobres
-
 ggplot(train_hogares, aes(x = Pobre))+ 
   geom_bar(fill = "darkblue")+
   theme_bw()+
   labs(x= "", y = "Frecuencia", title = "el hogar es pobre")
 
-# nos muestra que la muestra es desbalanceada, tenemos que balancearla pues 80% son no pobres y 20% pobres.
 
-prop.table(table(train_hogares$Pobre)) 
+# nos muestra que la muestra es desbalanceada, tenemos que balancearla pues 80% son no pobres y 20% pobres, si la dejamos
+#como está, nuestros modelos tendrán sesgo y tenderán a predecir que todos son "no pobres" pues es la categoría predominante
+prop.table(table(train_hogares$Pobre))
+
+glimpse(train_hogares)
+
+
 
 
 
