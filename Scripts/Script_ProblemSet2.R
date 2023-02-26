@@ -13,9 +13,10 @@ rm(list = ls())
 #install.packages("httr")
 
 library("pacman") # para cargar paquetes
-p_load("ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics","pastecs",
+p_load("rpart.plot","ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics","pastecs",
        "writexl","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer",
-       "readr","AER","MLmetrics","smotefamily","pROC","smotefamily","rpart","randomForest","fastAdaboost")
+       "readr","AER","MLmetrics","smotefamily","pROC","smotefamily","rpart","randomForest","rpart", "Metrics",
+       "rattle")
 
 # Importing Dataset -------------------------------------------------------
 
@@ -28,17 +29,17 @@ p_load("ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics"
 #train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
 
 #Compu Yilmer
-#test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
-#train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
-#test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
-#train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
+test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
+train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
+test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
+train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
 # sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
 
 #Compu Jimena
-test_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_hogares.csv")
-train_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_hogares.csv")
-test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_personas.csv")
-train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
+#test_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_hogares.csv")
+#train_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_hogares.csv")
+#test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_personas.csv")
+#train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
 
 
 # Unimos la base de datos de personas y hogares con merge usando el id del hogar
@@ -48,25 +49,6 @@ m_train <- merge(train_hogares, train_personas, by = "id")
 
 length(unique(m_test$id))
 length(unique(m_train$id))
-
-
-#Como vamos dummificar, vamos a fusionar las dos bases de datos (training & test) para prevenir que se quede alguna
-#categoría por fuera en alguna de las muestras, adicionalmente, vamos a crear nuevas variables, entonces lo ideal es
-#que queden creadas en ambas bases de datos
-
-
-#para la base de datos training, creamos una variable llamada "train" que vale 1, para la de test, la variable "train" vale 0,
-#esto para discriminarlas una vez las fusionemos
-#m_train$train <- rep(1, nrow(m_train))
-#m_test$train <- rep(0, nrow(m_test))
-
-#removemos las variables no comunes entre las bases de datos
-
-# primero seleccionamos las variables de interés
-#m_train <- subset(m_train, select = c("Clase.x","Fex_c.x","Lp","P5000","P6040","P6430","P6580","P7050","P7160","Clase.y","Fex_c.y","P5010","P6050","P6585s3","P6600","P6630s2","P7310","P7510s2","P7510s7","Depto.x","Fex_dpto.x","Nper","P5090","P6090","P6510","P7090","P7350","P7500s2","Depto.y","Fex_dpto.y","Ina","Npersug","P5100","P6100","P6585s1","P6610","P6630s3","P6800","P7110","P7422","P7510s3","Pet","Des","id","P5130","P6210","P6585s4","P6870","P7120","P7500s3","Dominio.x","Oc","P5140","P6210s1","P6545","P6620","P6630s4","P6920","P7472","P7510s5","train","Dominio.y","Oficio","P6240","P6585s2","P7040","P7505","Li","Orden","P6020","P6426","P6590","P6630s1","P6630s6","P7045","P7150","P7495","P7510s1","P7510s6"))
-
-#fusionamos la base
-#totaldata <- rbind(m_train, m_test)
 
 
 #empezamos con la creación de variables
@@ -279,9 +261,8 @@ m_test <- rename(m_test, JefeHogar = P6050)
 m_train <- m_train %>% filter(JefeHogar == 1)
 m_test <- m_test %>% filter(JefeHogar == 1)
 
-train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","IngresoPerCapita")) 
-test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Lp")) 
-
+train_final <-subset(m_train, select = c("id","PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","IngresoPerCapita")) 
+test_final <-subset(m_test, select = c("id","PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Lp")) 
 
 
 # Identificamos los NA para las bases de datos
