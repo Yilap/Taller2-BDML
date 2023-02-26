@@ -1,6 +1,8 @@
-Universidad de los Andes
+Universidad de Los Andes
 
 Maestría en Economía Aplicada
+
+Big Data & Machine Learning 
 
 Nelson Fabián López 
 
