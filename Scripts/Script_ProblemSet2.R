@@ -262,7 +262,7 @@ m_test <- rename(m_test, TipoDeTrabajo = P6430)
 
 
 # Renombramos la variable Ingreso per cápita
-train_final <- rename(train_final, IngresoPerCapita = Ingpcug)
+m_train <- rename(m_train, IngresoPerCapita = Ingpcug)
 
 
 ## Ya tenemos todas las variables, las operaciones que provienen de personas las asignamos para todo el hogar, especificamente
@@ -273,7 +273,7 @@ m_test <- rename(m_test, JefeHogar = P6050)
 m_train <- m_train %>% filter(JefeHogar == 1)
 m_test <- m_test %>% filter(JefeHogar == 1)
 
-train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","Ingpcug")) 
+train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","IngresoPerCapita")) 
 test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Lp")) 
 
 
