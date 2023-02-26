@@ -41,12 +41,6 @@ test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITOR
 train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
 
 
-# Los datos se guardan como un archivo binario R (rds) usando saveRDS()
-# para hacer más eficiente la carga cuando sea necesario
-
-#saveRDS(GEIH, file = "GEIH1.rds")
-#GEIH<-readRDS("GEIH1.Rds")
-
 # Unimos la base de datos de personas y hogares con merge usando el id del hogar
 m_test <- merge(test_hogares, test_personas, by = "id")
 m_train <- merge(train_hogares, train_personas, by = "id")
@@ -274,7 +268,7 @@ m_test <- rename(m_test, TipoDeTrabajo = P6430)
 
 
 # Renombramos la variable Ingreso per cápita
-train_final <- rename(train_final, IngresoPerCapita = Ingpcug)
+m_train <- rename(m_train, IngresoPerCapita = Ingpcug)
 
 
 ## Ya tenemos todas las variables, las operaciones que provienen de personas las asignamos para todo el hogar, especificamente
@@ -285,8 +279,8 @@ m_test <- rename(m_test, JefeHogar = P6050)
 m_train <- m_train %>% filter(JefeHogar == 1)
 m_test <- m_test %>% filter(JefeHogar == 1)
 
-train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","Ingpcug")) 
-test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo")) 
+train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","IngresoPerCapita")) 
+test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Lp")) 
 
 
 
@@ -299,12 +293,11 @@ test_final$RegimenSalud <- ifelse(is.na(test_final$RegimenSalud), 0, test_final$
 
 missing_count <- colSums(is.na(train_final))
 missing_count2 <- colSums(is.na(test_final))
-print(missing_count) #listo, ya quedó train_final sin NA
-print(missing_count2) #listo, ya quedó test sin NA
+print(missing_count) #Train_final sin NA
+print(missing_count2) #Test_final sin NA
 
 
 rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_personas","missing_count","missing_count2")
-
 
 # Grabamos las bases de datos finales
 save(train_final, file = "train_final.RData")
