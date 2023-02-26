@@ -282,9 +282,27 @@ test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","Je
 
 # Identificamos los NA para las bases de datos
 missing_count <- colSums(is.na(train_final))
-print(missing_count) #solo tenemos un missing value en Regimen de Salud, no afecta nuestro poder estadistico
+print(missing_count) #solo tenemos un missing value en Regimen de Salud, lo eliminamos pues no afecta nuestro poder estadistico
 
-rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_personas","missing_count")
+train_final$RegimenSalud <- ifelse(is.na(train_final$RegimenSalud), 0, train_final$RegimenSalud)
+test_final$RegimenSalud <- ifelse(is.na(test_final$RegimenSalud), 0, test_final$RegimenSalud)
+
+missing_count <- colSums(is.na(train_final))
+missing_count2 <- colSums(is.na(test_final))
+print(missing_count) #listo, ya quedó train_final sin NA
+print(missing_count2) #listo, ya quedó test sin NA
+
+
+rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_personas","missing_count","missing_count2")
+
+
+# Grabamos las bases de datos finales
+save(train_final, file = "train_final.RData")
+save(test_final, file = "test_final.RData")
+
+#Cargamos las bases de datos limpias
+load("train_final.RData")
+load("test_final.RData")
 
 # Estadísticas descriptivas -----------------------------------------------
 
