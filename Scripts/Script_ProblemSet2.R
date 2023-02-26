@@ -13,8 +13,9 @@ rm(list = ls())
 #install.packages("httr")
 
 library("pacman") # para cargar paquetes
-p_load("dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr","AER","MLmetrics","smotefamily")
-
+p_load("ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics","pastecs",
+       "writexl","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer",
+       "readr","AER","MLmetrics","smotefamily","pROC","smotefamily","rpart","randomForest","fastAdaboost")
 
 # Importing Dataset -------------------------------------------------------
 
