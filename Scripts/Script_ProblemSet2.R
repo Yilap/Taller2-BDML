@@ -29,17 +29,17 @@ p_load("rpart.plot","ROCR","gamlr","modelsummary","gtsummary","naniar","Performa
 #train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
 
 #Compu Yilmer
-test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
-train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
-test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
-train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
+#test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
+#train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
+#test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
+#train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
 # sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
 
 #Compu Jimena
-#test_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_hogares.csv")
-#train_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_hogares.csv")
-#test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_personas.csv")
-#train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
+test_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_hogares.csv")
+train_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_hogares.csv")
+test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_personas.csv")
+train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
 
 
 # Unimos la base de datos de personas y hogares con merge usando el id del hogar
