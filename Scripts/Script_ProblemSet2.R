@@ -280,7 +280,7 @@ m_train <- m_train %>% filter(JefeHogar == 1)
 m_test <- m_test %>% filter(JefeHogar == 1)
 
 train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","Ingpcug")) 
-test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo")) 
+test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Lp")) 
 
 
 
