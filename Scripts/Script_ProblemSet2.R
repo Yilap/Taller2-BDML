@@ -35,12 +35,6 @@ train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_p
 # sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
 
 
-# Los datos se guardan como un archivo binario R (rds) usando saveRDS()
-# para hacer más eficiente la carga cuando sea necesario
-
-#saveRDS(GEIH, file = "GEIH1.rds")
-#GEIH<-readRDS("GEIH1.Rds")
-
 # Unimos la base de datos de personas y hogares con merge usando el id del hogar
 m_test <- merge(test_hogares, test_personas, by = "id")
 m_train <- merge(train_hogares, train_personas, by = "id")
@@ -293,12 +287,11 @@ test_final$RegimenSalud <- ifelse(is.na(test_final$RegimenSalud), 0, test_final$
 
 missing_count <- colSums(is.na(train_final))
 missing_count2 <- colSums(is.na(test_final))
-print(missing_count) #listo, ya quedó train_final sin NA
-print(missing_count2) #listo, ya quedó test sin NA
+print(missing_count) #Train_final sin NA
+print(missing_count2) #Test_final sin NA
 
 
 rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_personas","missing_count","missing_count2")
-
 
 # Grabamos las bases de datos finales
 save(train_final, file = "train_final.RData")
