@@ -28,11 +28,17 @@ p_load("ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics"
 #train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
 
 #Compu Yilmer
-test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
-train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
-test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
-train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
+#test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
+#train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
+#test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
+#train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
 # sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
+
+#Compu Jimena
+test_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_hogares.csv")
+train_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_hogares.csv")
+test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_personas.csv")
+train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
 
 
 # Los datos se guardan como un archivo binario R (rds) usando saveRDS()
@@ -310,8 +316,7 @@ load("test_final.RData")
 
 # Estadísticas descriptivas -----------------------------------------------
 
-#"amigos," a partir de aquí tienen dos bases de datos, train y test, hagan descriptivas a partir de la base de datos train_final
-#Gracias.
+### Estadisticas descriptivas base de training ###
 
 
 
