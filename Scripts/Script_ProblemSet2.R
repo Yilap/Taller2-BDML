@@ -12,11 +12,10 @@ rm(list = ls())
 #install.packages("pacman")
 #install.packages("httr")
 
-
-
 library("pacman") # para cargar paquetes
-p_load("kknn","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr","AER","MLmetrics","smotefamily")
-
+p_load("ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics","pastecs",
+       "writexl","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer",
+       "readr","AER","MLmetrics","smotefamily","pROC","smotefamily","rpart","randomForest","fastAdaboost")
 
 # Importing Dataset -------------------------------------------------------
 
@@ -42,8 +41,7 @@ train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_p
 #saveRDS(GEIH, file = "GEIH1.rds")
 #GEIH<-readRDS("GEIH1.Rds")
 
-#hacemos los merged 
-
+# Unimos la base de datos de personas y hogares con merge usando el id del hogar
 m_test <- merge(test_hogares, test_personas, by = "id")
 m_train <- merge(train_hogares, train_personas, by = "id")
 #rm(test_hogares, test_personas,train_hogares, train_personas)
@@ -136,7 +134,7 @@ m_train <- rename(m_train, TipoVivienda = P5090)
 
 
 
-# Regímen contributivo & Subsidiado
+# Regimen contributivo & Subsidiado
 
 m_test$P6100[m_test$P6090 == 2 | m_test$P6090 == 9] <- 0
 m_train$P6100[m_train$P6090 == 2 | m_train$P6090 == 9] <- 0
@@ -278,7 +276,7 @@ m_test <- rename(m_test, JefeHogar = P6050)
 m_train <- m_train %>% filter(JefeHogar == 1)
 m_test <- m_test %>% filter(JefeHogar == 1)
 
-train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","Ingtotugarr")) 
+train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","Ingpcug")) 
 test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo")) 
 
 
@@ -287,8 +285,6 @@ missing_count <- colSums(is.na(train_final))
 print(missing_count) #solo tenemos un missing value en Regimen de Salud, no afecta nuestro poder estadistico
 
 rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_personas","missing_count")
-
-
 
 # Estadísticas descriptivas -----------------------------------------------
 
@@ -311,17 +307,14 @@ rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_pers
 
 # Classification Problem -------------------------------------------------------
 
-
-
 set.seed(1234)
 
-                            
 # Hacemos gráfica para comparar cuantos pobres y no pobres hay, se puede observar que la base de entrenamiento es
-#desbalanceada pues hay muchos menos pobres que no pobres
+# desbalanceada, pues hay muchos menos pobres que no pobres
 ggplot(train_hogares, aes(x = Pobre))+ 
   geom_bar(fill = "darkblue")+
   theme_bw()+
-  labs(x= "", y = "Frecuencia", title = "el hogar es pobre")
+  labs(x= "", y = "Frecuencia", title = "")
 
 
 # nos muestra que la muestra es desbalanceada, tenemos que balancearla pues 80% son no pobres y 20% pobres, si la dejamos
