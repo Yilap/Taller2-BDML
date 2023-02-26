@@ -12,8 +12,6 @@ rm(list = ls())
 #install.packages("pacman")
 #install.packages("httr")
 
-
-
 library("pacman") # para cargar paquetes
 p_load("dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr","AER","MLmetrics","smotefamily")
 
@@ -23,10 +21,10 @@ p_load("dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","starg
 # Se importan los 4 archivos a usar
 
 #Compu Betina
-test_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_hogares.csv")
-train_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_hogares.csv")
-test_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_personas.csv")
-train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
+#test_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_hogares.csv")
+#train_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_hogares.csv")
+#test_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_personas.csv")
+#train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
 
 #Compu Yilmer
 test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
@@ -42,8 +40,7 @@ train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_p
 #saveRDS(GEIH, file = "GEIH1.rds")
 #GEIH<-readRDS("GEIH1.Rds")
 
-#hacemos los merged 
-
+# Unimos la base de datos de personas y hogares con merge usando el id del hogar
 m_test <- merge(test_hogares, test_personas, by = "id")
 m_train <- merge(train_hogares, train_personas, by = "id")
 #rm(test_hogares, test_personas,train_hogares, train_personas)
@@ -136,7 +133,7 @@ m_train <- rename(m_train, TipoVivienda = P5090)
 
 
 
-# Regímen contributivo & Subsidiado
+# Regimen contributivo & Subsidiado
 
 m_test$P6100[m_test$P6090 == 2 | m_test$P6090 == 9] <- 0
 m_train$P6100[m_train$P6090 == 2 | m_train$P6090 == 9] <- 0
@@ -288,8 +285,6 @@ print(missing_count) #solo tenemos un missing value en Regimen de Salud, no afec
 
 rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_personas","missing_count")
 
-
-
 # Estadísticas descriptivas -----------------------------------------------
 
 #"amigos," a partir de aquí tienen dos bases de datos, train y test, hagan descriptivas a partir de la base de datos train_final
@@ -311,17 +306,14 @@ rm("m_test","m_train","test_hogares","test_personas","train_hogares","train_pers
 
 # Classification Problem -------------------------------------------------------
 
-
-
 set.seed(1234)
 
-                            
 # Hacemos gráfica para comparar cuantos pobres y no pobres hay, se puede observar que la base de entrenamiento es
-#desbalanceada pues hay muchos menos pobres que no pobres
+# desbalanceada, pues hay muchos menos pobres que no pobres
 ggplot(train_hogares, aes(x = Pobre))+ 
   geom_bar(fill = "darkblue")+
   theme_bw()+
-  labs(x= "", y = "Frecuencia", title = "el hogar es pobre")
+  labs(x= "", y = "Frecuencia", title = "")
 
 
 # nos muestra que la muestra es desbalanceada, tenemos que balancearla pues 80% son no pobres y 20% pobres, si la dejamos
