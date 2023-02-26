@@ -267,6 +267,9 @@ m_train <- rename(m_train, TipoDeTrabajo = P6430)
 m_test <- rename(m_test, TipoDeTrabajo = P6430)
 
 
+# Renombramos la variable Ingreso per cápita
+train_final <- rename(train_final, IngresoPerCapita = Ingpcug)
+
 
 ## Ya tenemos todas las variables, las operaciones que provienen de personas las asignamos para todo el hogar, especificamente
 ##para el Jefe de Hogar, por lo tanto, procedemos a generar las data por hogar nuevamente.
@@ -278,6 +281,7 @@ m_test <- m_test %>% filter(JefeHogar == 1)
 
 train_final <-subset(m_train, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo","Pobre","Lp","Ingpcug")) 
 test_final <-subset(m_test, select = c("PorcentajeOcupados","ViveEnCabecera","JefeMujer","PersonaPorCuarto","TipoVivienda","RegimenSalud","EducaciónPromedio","AntiguedadTrabajo","TipoDeTrabajo")) 
+
 
 
 # Identificamos los NA para las bases de datos
