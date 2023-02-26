@@ -15,7 +15,7 @@ rm(list = ls())
 
 
 library("pacman") # para cargar paquetes
-p_load("kknn","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr","AER","MLmetrics","smotefamily")
+p_load("dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer","readr","AER","MLmetrics","smotefamily")
 
 
 # Importing Dataset -------------------------------------------------------
@@ -23,10 +23,10 @@ p_load("kknn","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2"
 # Se importan los 4 archivos a usar
 
 #Compu Betina
-#test_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_hogares.csv")
-#train_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_hogares.csv")
-#test_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_personas.csv")
-#train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
+test_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_hogares.csv")
+train_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_hogares.csv")
+test_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_personas.csv")
+train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
 
 #Compu Yilmer
 test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
