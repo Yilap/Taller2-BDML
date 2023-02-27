@@ -13,7 +13,7 @@ rm(list = ls())
 #install.packages("httr")
 
 library("pacman") # para cargar paquetes
-p_load("rpart.plot","ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics","pastecs",
+p_load("GGally","psych","rpart.plot","ROCR","gamlr","modelsummary","gtsummary","naniar","PerformanceAnalytics","pastecs",
        "writexl","dplyr","httr","tidyverse","rvest","rio","skimr","caret","ggplot2","stargazer",
        "readr","AER","MLmetrics","smotefamily","pROC","smotefamily","rpart","randomForest","rpart", "Metrics",
        "rattle")
@@ -248,10 +248,8 @@ m_train <- m_train %>%
 m_train <- rename(m_train, TipoDeTrabajo = P6430)
 m_test <- rename(m_test, TipoDeTrabajo = P6430)
 
-
 # Renombramos la variable Ingreso per cápita
 m_train <- rename(m_train, IngresoPerCapita = Ingpcug)
-
 
 ## Ya tenemos todas las variables, las operaciones que provienen de personas las asignamos para todo el hogar, especificamente
 ##para el Jefe de Hogar, por lo tanto, procedemos a generar las data por hogar nuevamente.
@@ -293,17 +291,74 @@ load("test_final.RData")
 ### Estadisticas descriptivas base de training ###
 
 
+library(psych) # cargar paquete psych para usar la función describe()
+
+# Seleccionar variables categóricas y numéricas de train_final
+train_final_desc <- train_final[, c("ViveEnCabecera", "JefeMujer", "PersonaPorCuarto", "TipoVivienda", "RegimenSalud",
+                                    "TipoDeTrabajo", "Pobre", "PorcentajeOcupados", "AntiguedadTrabajo", "Lp",
+                                    "IngresoPerCapita", "EducaciónPromedio")]
+
+# Calcular estadísticas descriptivas con la función describe()
+describe(train_final_desc)
 
 
+library(ggplot2)
 
+# Gráfico de barras para variables categóricas
+ggplot(train_final, aes(x = ViveEnCabecera)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de ViveEnCabecera")
 
+ggplot(train_final, aes(x = JefeMujer)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de JefeMujer")
 
+ggplot(train_final, aes(x = TipoVivienda)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de TipoVivienda")
 
+ggplot(train_final, aes(x = RegimenSalud)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de RegimenSalud")
 
+ggplot(train_final, aes(x = TipoDeTrabajo)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de TipoDeTrabajo")
 
+ggplot(train_final, aes(x = Pobre)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Distribución de Pobre")
 
+# Histograma para variables numéricas
+ggplot(train_final, aes(x = PorcentajeOcupados)) +
+  geom_histogram(fill = "steelblue", bins = 20) +
+  labs(title = "Distribución de PorcentajeOcupados")
 
+ggplot(train_final, aes(x = AntiguedadTrabajo)) +
+  geom_histogram(fill = "steelblue", bins = 20) +
+  labs(title = "Distribución de AntiguedadTrabajo")
 
+ggplot(train_final, aes(x = Lp)) +
+  geom_histogram(fill = "steelblue", bins = 20) +
+  labs(title = "Distribución de Lp")
+
+ggplot(train_final, aes(x = IngresoPerCapita)) +
+  geom_histogram(fill = "steelblue", bins = 20) +
+  labs(title = "Distribución de IngresoPerCapita")
+
+ggplot(train_final, aes(x = EducaciónPromedio)) +
+  geom_histogram(fill = "steelblue", bins = 20) +
+  labs(title = "Distribución de EducaciónPromedio")
+
+# Boxplot para variables numéricas
+ggplot(train_final, aes(y = PersonaPorCuarto)) +
+  geom_boxplot(fill = "steelblue") +
+  labs(title = "Boxplot de PersonaPorCuarto")
+
+# Gráfico de densidad para variables numéricas
+ggplot(train_final, aes(x = PersonaPorCuarto)) +
+  geom_density(fill = "steelblue") +
+  labs(title = "Distribución de PersonaPorCuarto")
 
 
 # Classification Problem -------------------------------------------------------
