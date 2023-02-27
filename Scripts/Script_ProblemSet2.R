@@ -22,25 +22,11 @@ p_load("GGally","psych","rpart.plot","ROCR","gamlr","modelsummary","gtsummary","
 
 # Se importan los 4 archivos a usar
 
-#Compu Betina
-#test_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_hogares.csv")
-#train_hogares <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_hogares.csv")
-#test_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/test_personas.csv")
-#train_personas <- read_csv("Downloads/uniandes-bdml-20231-ps2/train_personas.csv")
-
-#Compu Yilmer
-#test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
-#train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
-#test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
-#train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
-# sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
-
-#Compu Jimena
-test_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_hogares.csv")
-train_hogares <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_hogares.csv")
-test_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/test_personas.csv")
-train_personas <- read_csv("C:/Users/Jimena/Documents/MAESTRIA/BIG DATA/REPOSITORIOS BIG DATA/REPOSITORIOS/bsses/train_personas.csv")
-
+test_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_hogares.csv")
+train_hogares <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_hogares.csv")
+test_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/test_personas.csv")
+train_personas <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/train_personas.csv")
+sample_sub <- read_csv("C:/Users/Yilmer Palacios/Desktop/BaseDatosT2/sample_submission.csv")
 
 # Unimos la base de datos de personas y hogares con merge usando el id del hogar
 m_test <- merge(test_hogares, test_personas, by = "id")
@@ -361,23 +347,609 @@ ggplot(train_final, aes(x = PersonaPorCuarto)) +
   labs(title = "Distribución de PersonaPorCuarto")
 
 
-# Classification Problem -------------------------------------------------------
+# Clasificación -----------------------------------------------------------
 
-set.seed(1234)
+# Hacemos gráfica para comparar cuantos hogares pobres y no pobres hay: 
+ggplot(train_hogares, aes(x = factor(Pobre))) + 
+  geom_bar(fill = "darkblue") +
+  theme_bw() +
+  labs(x= "", y = "Frecuencia", title = "Pobreza en los hogares") +
+  scale_x_discrete(labels = c("Hogar no pobre", "Hogar pobre"))
 
-# Hacemos gráfica para comparar cuantos pobres y no pobres hay, se puede observar que la base de entrenamiento es
-# desbalanceada, pues hay muchos menos pobres que no pobres
-ggplot(train_hogares, aes(x = Pobre))+ 
-  geom_bar(fill = "darkblue")+
-  theme_bw()+
-  labs(x= "", y = "Frecuencia", title = "")
+# Se observa que la base de entrenamiento es desbalanceada, pues hay muchos menos hogares pobres que no pobres
 
-
-# nos muestra que la muestra es desbalanceada, tenemos que balancearla pues 80% son no pobres y 20% pobres, si la dejamos
-#como está, nuestros modelos tendrán sesgo y tenderán a predecir que todos son "no pobres" pues es la categoría predominante
 prop.table(table(train_hogares$Pobre))
 
-glimpse(train_hogares) # Nos muestra los primeros datos de las variables, esto nos sirve para identificar las categóricas
-                       #aunque  lo podemos hacer con  el diccionario
+# El 80% de los hogares no son pobres y 20% sí lo son. Esto ocasiona que los modelos tengan sesgo y tenderán 
+# a predecir que todos los hogares son "no pobres", pues es la categoría predominante
 
+dbtrain <- train_final
+dbtest <- test_final
+
+# Verificación de que la variable Pobre es una dicótoma 
+dbtrain$Pobre <- factor(dbtrain$Pobre, levels = c(0,1), labels = c("No", "Si"))
+levels(dbtrain$Pobre)
+
+glimpse(dbtrain)
+glimpse(dbtest)
+prop.table(table(dbtrain$Pobre))
+
+
+# Set seed para asegurar replicabilidad del ejercicio
+set.seed(101)
+
+# Para empezar, se realiza la partición de la base de datos train en tres partes (training, test y evaluación)
+# Esta división será útil para el cálculo del ROC (Receiver Operating Characteristic), el cual servirá 
+# para evaluar la calidad del modelo de clasificación binario, pues presenta la relación entre la tasa de verdaderos 
+# positivos (TPR) y la tasa de falsos positivos (FPR) a diferentes umbrales de clasificación.
+
+split1 <- createDataPartition(dbtrain$Pobre , p = 0.7)[[1]]
+length(split1)
+training = dbtrain[split1,]
+other <- dbtrain[-split1,]
+
+split2 <- createDataPartition(other$Pobre , p = 1/3)[[1]]
+evaluation <- other[split2,]
+testing <- other[-split2,]
+
+dim(training)
+dim(testing)
+dim(evaluation)
+
+# Se valida la partición realizada
+prop.table(table(training$Pobre))
+prop.table(table(testing$Pobre))
+prop.table(table(evaluation$Pobre))
+
+predict <- stats::predict
+
+# Predicción
+
+# Se evaluarán tres especificaciones, presentadas a continuación:
+
+M1 <- as.formula("Pobre ~ PorcentajeOcupados + JefeMujer + PersonaPorCuarto + TipoVivienda + ViveEnCabecera + TipoDeTrabajo + RegimenSalud + EducaciónPromedio + AntiguedadTrabajo")
+M2 <- as.formula("Pobre ~ PorcentajeOcupados + JefeMujer + PersonaPorCuarto + TipoVivienda + TipoDeTrabajo + RegimenSalud + EducaciónPromedio")
+M3 <- as.formula("Pobre ~ PorcentajeOcupados + JefeMujer + PersonaPorCuarto + TipoVivienda + RegimenSalud + EducaciónPromedio")
+
+
+# Primero, se realiza a manera de control un 5-fold cross-validation
+# Se hace Model Tuning para maximizar la capacidad predictiva del modelo. Para contrarrestar los efectos negativos del desequilibrio de clases se ajusta el modelo para maximizar 
+# la precisión de las clases minoritarias, es decir, los hogares pobres. En este caso, ajustar el modelo para maximizar la sensibilidad puede ayudar a desensibilizar el proceso 
+# de entrenamiento al alto porcentaje de datos "no pobres" en el conjunto de entrenamiento.
+
+ffcv<-function(...)c(twoClassSummary(...), defaultSummary(...))
+
+Control <- trainControl(method = "cv",
+                        number = 5,
+                        summaryFunction = ffcv,
+                        classProbs = TRUE,
+                        verbose=FALSE,
+                        savePredictions = T)
+
+# Ajustar el modelo de regresión logística para el M1
+logitM1 <- train(
+  M1,
+  data = training,
+  method = "glm",
+  trControl = Control,
+  family = "binomial",
+  preProcess = c("center", "scale")
+)
+
+logitM1
+
+# Ajustar el modelo de regresión logística para el M2
+logitM2 <- train(
+  M2,
+  data = training,
+  method = "glm",
+  trControl = Control,
+  family = "binomial",
+  preProcess = c("center", "scale")
+)
+
+logitM2
+
+# Ajustar el modelo de regresión logística para el M3
+logitM3 <- train(
+  M3,
+  data = training,
+  method = "glm",
+  trControl = Control,
+  family = "binomial",
+  preProcess = c("center", "scale")
+)
+
+logitM3
+
+# Lasso para M1 
+grid <- 10^seq(-4, 0.01, length = 200)
+
+lasso1 <- train(
+  M1,
+  data = training,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso1 
+
+# Lasso para M2
+lasso2 <- train(
+  M2,
+  data = training,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso2
+
+# Lasso para M3
+lasso3 <- train(
+  M3,
+  data = training,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso3
+
+# Lasso - up sampling
+
+upSampledTrain <- upSample(x = training,
+                           y = training$Pobre,
+                           yname = "Pobre")
+dim(training)
+
+dim(upSampledTrain)
+
+# Se observa que se balancean hacia arriba 
+table(upSampledTrain$Pobre)
+
+# Lasso - up sampling para M1
+lasso_upsample1 <- train(
+  M1,
+  data = upSampledTrain,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso_upsample1
+
+# Lasso - up sampling para M2
+lasso_upsample2 <- train(
+  M2,
+  data = upSampledTrain,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso_upsample2
+
+# Lasso - up sampling para M3
+lasso_upsample3 <- train(
+  M3,
+  data = upSampledTrain,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso_upsample3
+
+# Lasso - down sampling
+
+downSampledTrain <- downSample(x = training,
+                               y = training$Pobre,
+                               yname = "Pobre")
+
+# Se observa que los datos se redondean hacia abajo
+table(downSampledTrain$Pobre)
+
+# Lasso - down sampling para M1
+lasso_downsample1 <- train(
+  M1,
+  data = downSampledTrain,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso_downsample1
+
+# Lasso - down sampling para M2
+lasso_downsample2 <- train(
+  M2,
+  data = downSampledTrain,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso_downsample2
+
+# Lasso - down sampling para M3
+lasso_downsample3 <- train(
+  M3,
+  data = downSampledTrain,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid),
+  preProcess = c("center", "scale")
+)
+
+lasso_downsample3
+
+# Logit - Elastic Net
+
+# Elastic Net para M1
+elasticnet1 <- train(
+  M1,
+  data = training,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Acc",
+  preProcess = c("center", "scale")
+)
+
+elasticnet1
+
+# Elastic Net para M2
+elasticnet2<- train(
+  M2,
+  data = training,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  preProcess = c("center", "scale")
+)
+
+elasticnet2
+
+# Elastic Net para M3
+elasticnet3<- train(
+  M3,
+  data = training,
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial",
+  metric = "Sens",
+  preProcess = c("center", "scale")
+)
+
+elasticnet3
+
+# Lasso - ROC
+
+# Lasso - ROC para M1
+lasso_roc1 <- train(
+  M1, 
+  data = training, 
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial", 
+  metric = "ROC",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid), 
+  preProcess = c("center", "scale")
+)
+lasso_roc1
+
+# Lasso - ROC para M2
+lasso_roc2 <- train(
+  M2, 
+  data = training, 
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial", 
+  metric = "ROC",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid), 
+  preProcess = c("center", "scale")
+)
+lasso_roc2
+
+# Lasso - ROC para M3
+lasso_roc3 <- train(
+  M3, 
+  data = training, 
+  method = "glmnet",
+  trControl = Control,
+  family = "binomial", 
+  metric = "ROC",
+  tuneGrid = expand.grid(alpha = 0,lambda=grid), 
+  preProcess = c("center", "scale")
+)
+lasso_roc3
+
+# Alternative Cutoffs
+p_load("pROC")
+
+# Para M1 (lasso_roc1) #
+evalResults <- data.frame(Pobre = evaluation$Pobre)
+evalResults$Roc1 <- predict(lasso_roc1,
+                            newdata = evaluation,
+                            type = "prob")[,1]
+head(evalResults)
+
+#Se calcula el ROC para el M1
+rf_ROC1 <- roc(evalResults$Pobre, evalResults$Roc1, levels = rev(levels(evalResults$Pobre)))
+rf_ROC1
+
+#Se calcula el Cutoff
+rf_Thresh1 <- coords(rf_ROC1, x = "best", best.method = "closest.topleft")
+rf_Thresh1
+
+#Se evalúan los resultados
+evalResults<-evalResults %>% mutate(lasso1hat05=ifelse(evalResults$Roc>0.5,"Si","No"),
+                                    lasso1rf_Thresh=ifelse(evalResults$Roc>rf_Thresh1$threshold,"Si","No"))
+
+# Caso en el que el threshold es = 0.5 (Bayes)
+with(evalResults,table(Pobre,lasso1hat05))
+
+# Caso en el que el threshold se obtiene del ROC
+with(evalResults,table(Pobre,lasso1rf_Thresh))
+
+# Para M2 (lasso_roc2) #
+evalResults <- data.frame(Pobre = evaluation$Pobre)
+evalResults$Roc2 <- predict(lasso_roc2,
+                            newdata = evaluation,
+                            type = "prob")[,1]
+head(evalResults)
+
+#Se calcula el ROC para el M2
+rf_ROC2 <- roc(evalResults$Pobre, evalResults$Roc2, levels = rev(levels(evalResults$Pobre)))
+rf_ROC2
+
+#Se calcula el Cutoff
+rf_Thresh2 <- coords(rf_ROC2, x = "best", best.method = "closest.topleft")
+rf_Thresh2
+
+#Se evalúan los resultados
+evalResults<-evalResults %>% mutate(lasso2hat05=ifelse(evalResults$Roc>0.5,"Si","No"),
+                                    lasso2rf_Thresh=ifelse(evalResults$Roc>rf_Thresh2$threshold,"Si","No"))
+
+# Caso en el que el threshold es = 0.5 (Bayes)
+with(evalResults,table(Pobre,lasso2hat05))
+
+# Caso en el que el threshold se obtiene del ROC
+with(evalResults,table(Pobre,lasso2rf_Thresh))
+
+# Para M3 (lasso_roc3) #
+evalResults <- data.frame(Pobre = evaluation$Pobre)
+evalResults$Roc3 <- predict(lasso_roc3,
+                            newdata = evaluation,
+                            type = "prob")[,1]
+head(evalResults)
+
+#Se calcula el ROC para el M3
+rf_ROC3 <- roc(evalResults$Pobre, evalResults$Roc3, levels = rev(levels(evalResults$Pobre)))
+rf_ROC3
+
+#Se calcula el Cutoff
+rf_Thresh3 <- coords(rf_ROC3, x = "best", best.method = "closest.topleft")
+rf_Thresh3
+
+#Se evalúan los resultados
+evalResults<-evalResults %>% mutate(lasso3hat05=ifelse(evalResults$Roc>0.5,"Si","No"),
+                                    lasso3rf_Thresh=ifelse(evalResults$Roc>rf_Thresh3$threshold,"Si","No"))
+
+# Caso en el que el threshold es = 0.5 (Bayes)
+with(evalResults,table(Pobre,lasso3hat05))
+
+# Caso en el que el threshold se obtiene del ROC
+with(evalResults,table(Pobre,lasso3rf_Thresh))
+head(evalResults)
+
+# Presentar los resultados por modelo (M1, M2 y M3) y por enfoque
+
+# Para el modelo M1
+testResults <- data.frame(Pobre = testing$Pobre)
+testResults
+
+testResults$logitM1<- predict(logitM1,
+                              newdata = testing, 
+                              type = "prob")[,1]
+
+testResults$lasso1<- predict(lasso1,
+                             newdata = testing,
+                             type = "prob")[,1]
+
+testResults$lasso_downsample1 <- predict(lasso_downsample1,
+                                         newdata = testing,
+                                         type = "prob")[,1]
+
+testResults$lasso_upsample1 <- predict(lasso_upsample1,
+                                       newdata = testing,
+                                       type = "prob")[,1]
+
+testResults$elasticnet1 <- predict(elasticnet1,
+                                   newdata = testing,
+                                   type = "prob")[,1]
+
+testResults$lasso_roc1 <- predict(lasso_roc1,
+                                  newdata = testing,
+                                  type = "prob")[,1]
+
+testResults<-testResults %>%
+  mutate(logitM1=ifelse(logitM1>0.5,"Si","No"),
+         lasso1=ifelse(lasso1>0.5,"Si","No"),
+         lasso_roc1=ifelse(lasso_roc1>rf_Thresh1$threshold,"Si","No"),
+         lasso_downsample1=ifelse(lasso_downsample1>0.5,"Si","No"),
+         lasso_upsample1=ifelse(lasso_upsample1>0.5,"Si","No"),
+         elasticnet1=ifelse(elasticnet1>0.5,"Si","No")
+  )
+
+with(testResults,table(Pobre,logitM1))
+with(testResults,table(Pobre,lasso1))
+with(testResults,table(Pobre,lasso_roc1))
+with(testResults,table(Pobre,lasso_downsample1))
+with(testResults,table(Pobre,lasso_upsample1))
+with(testResults,table(Pobre,elasticnet1))
+
+# Para el modelo M2
+
+testResults$logitM2<- predict(logitM2,
+                              newdata = testing, 
+                              type = "prob")[,1]
+
+testResults$lasso2<- predict(lasso2,
+                             newdata = testing,
+                             type = "prob")[,1]
+
+testResults$lasso_downsample2 <- predict(lasso_downsample2,
+                                         newdata = testing,
+                                         type = "prob")[,1]
+
+testResults$lasso_upsample2 <- predict(lasso_upsample2,
+                                       newdata = testing,
+                                       type = "prob")[,1]
+
+testResults$elasticnet2 <- predict(elasticnet2,
+                                   newdata = testing,
+                                   type = "prob")[,1]
+
+testResults$lasso_roc2 <- predict(lasso_roc2,
+                                  newdata = testing,
+                                  type = "prob")[,1]
+
+testResults<-testResults %>%
+  mutate(logitM2=ifelse(logitM2>0.5,"Si","No"),
+         lasso2=ifelse(lasso2>0.5,"Si","No"),
+         lasso_roc2=ifelse(lasso_roc2>rf_Thresh2$threshold,"Si","No"),
+         lasso_downsample2=ifelse(lasso_downsample2>0.5,"Si","No"),
+         lasso_upsample2=ifelse(lasso_upsample2>0.5,"Si","No"),
+         elasticnet2=ifelse(elasticnet2>0.5,"Si","No")
+  )
+
+with(testResults,table(Pobre,logitM2))
+with(testResults,table(Pobre,lasso2))
+with(testResults,table(Pobre,lasso_roc2))
+with(testResults,table(Pobre,lasso_downsample2))
+with(testResults,table(Pobre,lasso_upsample2))
+with(testResults,table(Pobre,elasticnet2))
+
+# Para el modelo M3
+
+testResults$logitM3<- predict(logitM3,
+                              newdata = testing, 
+                              type = "prob")[,1]
+
+testResults$lasso3<- predict(lasso3,
+                             newdata = testing,
+                             type = "prob")[,1]
+
+testResults$lasso_downsample3 <- predict(lasso_downsample3,
+                                         newdata = testing,
+                                         type = "prob")[,1]
+
+testResults$lasso_upsample3 <- predict(lasso_upsample3,
+                                       newdata = testing,
+                                       type = "prob")[,1]
+
+testResults$elasticnet3 <- predict(elasticnet3,
+                                   newdata = testing,
+                                   type = "prob")[,1]
+
+testResults$lasso_roc3 <- predict(lasso_roc3,
+                                  newdata = testing,
+                                  type = "prob")[,1]
+
+testResults<-testResults %>%
+  mutate(logitM3=ifelse(logitM3>0.5,"Si","No"),
+         lasso3=ifelse(lasso3>0.5,"Si","No"),
+         lasso_roc3=ifelse(lasso_roc3>rf_Thresh3$threshold,"Si","No"),
+         lasso_downsample3=ifelse(lasso_downsample3>0.5,"Si","No"),
+         lasso_upsample3=ifelse(lasso_upsample3>0.5,"Si","No"),
+         elasticnet3=ifelse(elasticnet3>0.5,"Si","No")
+  )
+
+with(testResults,table(Pobre,logitM3))
+with(testResults,table(Pobre,lasso3))
+with(testResults,table(Pobre,lasso_roc3))
+with(testResults,table(Pobre,lasso_downsample3))
+with(testResults,table(Pobre,lasso_upsample3))
+with(testResults,table(Pobre,elasticnet3))
+
+logitM1
+logitM2
+logitM3
+lasso1
+lasso2
+lasso3
+lasso_upsample1
+lasso_upsample2
+lasso_upsample3
+lasso_downsample1
+lasso_downsample2
+lasso_downsample3
+elasticnet1
+elasticnet2
+elasticnet3
+lasso_roc1
+lasso_roc2
+lasso_roc3
+
+## data test
+data_submit <- test_final
+df_coeficientes <- coef(lasso_roc1$finalModel, c(lasso_roc1$finalModel$lambdaOpt, lasso_roc1$finalModel$a0)) %>%
+  as.matrix() %>%
+  as_tibble(rownames = "predictor") %>%
+  rename(coeficiente = s0)
+
+write_xlsx(df_coeficientes, file = "/Users/betinacortes/clasification_model_submit_LR1.csv") # se exporta a excel tabla con las estadísticas descriptivas
+
+df_coeficientes %>%
+  filter(predictor != "(Intercept)") %>%
+  ggplot(aes(x = predictor, y = coeficiente)) +
+  geom_col(fill = "#556B2F") + 
+  labs(title = "Coeficientes del modelo Lasso1, maximizando el ROC", y = "Coeficientes", x = "Variables predictoras") + # Añadir labels en X e Y
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 8, angle = 90))
+
+
+## prediction
+data_submit$prediction <- predict(lasso_roc1, data_submit , type="prob")[,1]
+
+data_submit = data_submit %>% mutate(pobre=ifelse(prediction>0.5,1,0))
+
+submit = data_submit %>% select(id,pobre)
+
+prop.table(table(submit$pobre)) 
+
+## export results
+saveRDS(submit, file = "clasification_model_submit.rds")
+
+write.csv(submit, file = "/Users/betinacortes/clasification_model_submit_EN1.csv", row.names = FALSE)
 
