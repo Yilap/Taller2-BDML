@@ -20,10 +20,10 @@ documents: Contiene el documento final del Problem Set 2 en word y pdf.
 
 scripts: Contiene el script final del trabajo - Script_ProblemSet2.
 
-stores: Contiene las bases de datos y la descripción de las variables. 
+stores: La descripción de las variables. 
 
-1. Archivo en pdf que contiene la descripción de las variables de las bases de datos. 
-2. Contiene las bases de datos utilizadas para la predicción de los modelos. 
+Archivo en pdf que contiene la descripción de las variables de las bases de datos. 
+
 
 views: Contiene las gráficas y tablas del Problem Set 2. 
 
