@@ -953,3 +953,352 @@ saveRDS(submit, file = "clasification_model_submit.rds")
 
 write.csv(submit, file = "/Users/betinacortes/clasification_model_submit_EN1.csv", row.names = FALSE)
 
+
+
+# Income Regression Approach ----------------------------------------------
+
+#Cargamos las bases de datos limpias
+load("train_final.RData")
+load("test_final.RData")
+
+
+rm(list = ls()) 
+setwd("C:/Users/Yilmer Palacios/Desktop/Taller 2 R")
+set.seed(1234) #Creamos semilla
+
+#Creamos una tabla para almacenar resultados de modelos
+Modelo <- c("OLS-Oversampling", "OLS- Downsampliing","Árbol")
+Accuracy <- c("0")
+Sensitivity <- c("0")
+Specificity <- c("0")
+ResultadosModPred <- data.frame(Modelo, Accuracy, Sensitivity, Specificity)
+rm(Accuracy, Modelo, Sensitivity, Specificity)
+
+#Cargamos las bases de datos limpias
+load("train_final.RData")
+load("test_final.RData")
+
+
+#Creamos la variable PobreReg a partir de la de ingreso per cápita y la volvemos dicótoma.
+train_final <- train_final %>%mutate(PobreReg=ifelse(IngresoPerCapita < Lp, 1, 0))
+train_final<-train_final %>% mutate(PobreReg=factor(PobreReg,
+                                                    levels=c(1,0),
+                                                    labels=c("Pobre","No Pobre")))
+
+train_final<-train_final %>% mutate(Pobre=factor(Pobre,
+                                                 levels=c(1,0),
+                                                 labels=c("Pobre","No Pobre")))
+
+
+#Revisión, comparamos la variable pobre original contra la generada a partir de IngresoPerCápita
+compare<- select(filter(train_final),c(Pobre, PobreReg)) 
+table_compare <- summary(compare)  
+table_compare 
+summary(compare) 
+prop.table(table(train_final$PobreReg)) # como vimos lineas arriba, el 20% de las observaciones son de hogares pobres
+
+
+#Partimos la muestra en 2 para los procesos de entrenamiento y testeo
+Particion <- createDataPartition(train_final$PobreReg , p = 0.7)[[1]]
+length(Particion)
+trainingbf = train_final[Particion,]
+testing <- train_final[-Particion,]
+
+
+
+##########################################################
+#################### MODELOS OLS US ######################
+##########################################################
+
+#Balanceamos la data de training, pues los "No Pobres" son cerca del 80%
+# Implementamos upsample
+
+training <- upSample(x = select(trainingbf, -PobreReg), 
+                     y = trainingbf$PobreReg, list = F, yname = "PobreRegTRUE")
+
+prop.table(table(trainingbf$PobreReg))
+prop.table(table(training$PobreReg))
+nrow(trainingbf)
+nrow(training)
+
+
+#Validamos la distribución de pobres entre las particiones
+prop.table(table(train_final$PobreReg))
+prop.table(table(training$PobreReg))
+prop.table(table(testing$PobreReg))
+
+
+#creamos el modelo
+modelo <- as.formula("IngresoPerCapita ~ PorcentajeOcupados + ViveEnCabecera + JefeMujer +
+                      PersonaPorCuarto + TipoVivienda + RegimenSalud + EducaciónPromedio + AntiguedadTrabajo +
+                      TipoDeTrabajo")
+
+
+
+
+# Cross Validation
+control <- trainControl(method = "cv",
+                        number = 5,
+                        #summaryFunction = fiveStats,
+                        #classProbs = TRUE,
+                        verbose=FALSE,
+                        savePredictions = T)
+
+
+#creamos una función para calcular el sse y sst de los distintos modelos
+evaluaciónresultados <- function(true, predicted, df) {
+  SSE <- sum((predicted - true)^2)
+  SST <- sum((true - mean(true))^2)
+  R_square <- 1 - SSE / SST
+  RMSE = sqrt(SSE/nrow(df))
+  
+  # Medtricas del cumplimiento del model
+  data.frame(
+    RMSE = RMSE,
+    Rsquare = R_square
+  )}
+
+
+#Hacemos el entrenamiento del modelo lineal OLS
+mod_lineal <- train(
+  modelo,
+  data = training,
+  method = "lm",
+  trControl = control,
+  preProcess = c("center", "scale")
+)
+
+mod_lineal # visualizamos el modelo en la consola
+predLineal <- predict(mod_lineal , testing) # Hacemos predicción con la data de testing
+evaluaciónresultados(testing$IngresoPerCapita,predLineal,testing) #llamamos función para evaluar resultados
+
+# Clasificacion del modelo lineal -> vemos predicción como dicótoma Pobre
+
+testingOLSUS <- testing
+testingOLSUS$PredictInc <- predLineal
+testingOLSUS <- testingOLSUS %>%mutate(linealLP1=ifelse(PredictInc < Lp, 1, 0))
+testingOLSUS <- testingOLSUS %>% mutate(linealLP1=factor(linealLP1,levels=c(1,0),labels=c("Pobre","No Pobre")))
+
+
+#Vemos parámetros
+
+acc_OLSUP <- Accuracy(testingOLSUS$PobreReg, testingOLSUS$linealLP1)
+sens_OLSUP <- Sensitivity(testingOLSUS$PobreReg, testingOLSUS$linealLP1)
+spec_OLSUP <- Specificity(testingOLSUS$PobreReg, testingOLSUS$linealLP1)
+acc_OLSUP
+sens_OLSUP
+spec_OLSUP
+ResultadosModPred$Accuracy[1] <- acc_OLSUP
+ResultadosModPred$Sensitivity[1] <- sens_OLSUP
+ResultadosModPred$Specificity [1]<- spec_OLSUP
+
+
+#Predecimos la data test_final para Kaggle
+predLineal2 <- predict(mod_lineal , test_final) # Hacemos predicción con la data de testing
+Final <- test_final
+Final$PredictInc <- predLineal2
+Final <- Final %>% mutate(linealLP1=ifelse(PredictInc < Lp, 1, 0))
+Final <- rename(Final, pobre = linealLP1)
+Final <-subset(Final, select = c("id","pobre")) 
+write.csv(Final, file = "C:/Users/Yilmer Palacios/Desktop/Taller 2 R/regression_a1.csv", row.names = FALSE)
+
+prop.table(table(Final$pobre))
+
+
+##########################################################
+#################### MODELOS OLS DS ######################
+##########################################################
+
+#Balanceamos la data de training, pues los "No Pobres" son cerca del 80%
+# Implementamos upsample
+
+
+training <- downSample(x = select(trainingbf, -PobreReg), 
+                       y = trainingbf$PobreReg, list = F, yname = "PobreRegTRUE")
+
+
+prop.table(table(trainingbf$PobreReg))
+prop.table(table(training$PobreReg))
+nrow(trainingbf)
+nrow(training)
+
+# Cross Validation
+control <- trainControl(method = "cv",
+                        number = 5,
+                        #summaryFunction = fiveStats,
+                        #classProbs = TRUE,
+                        verbose=FALSE,
+                        savePredictions = T)
+
+
+#Hacemos el entrenamiento del modelo lineal OLS
+mod_lineal2 <- train(
+  modelo,
+  data = training,
+  method = "lm",
+  trControl = control,
+  preProcess = c("center", "scale")
+)
+
+mod_lineal2 # visualizamos el modelo en la consola
+predLineal <- predict(mod_lineal2 , testing) # Hacemos predicción con la data de testing
+evaluaciónresultados(testing$IngresoPerCapita,predLineal,testing) #llamamos función para evaluar resultados
+
+# Clasificacion del modelo lineal -> vemos predicción como dicótoma Pobre
+
+testingOLSDW <- testing
+testingOLSDW$PredictInc <- predLineal
+testingOLSDW <- testingOLSDW %>%mutate(linealLP1=ifelse(PredictInc < Lp, 1, 0))
+testingOLSDW <- testingOLSDW %>% mutate(linealLP1=factor(linealLP1,levels=c(1,0),labels=c("Pobre","No Pobre")))
+
+
+#Vemos parámetros
+
+acc_OLSDW <- Accuracy(testingOLSDW$PobreReg, testingOLSDW$linealLP1)
+sens_OLSDW <- Sensitivity(testingOLSDW$PobreReg, testingOLSDW$linealLP1)
+spec_OLSDW <- Specificity(testingOLSDW$PobreReg, testingOLSDW$linealLP1)
+acc_OLSDW
+sens_OLSDW
+spec_OLSDW
+ResultadosModPred$Accuracy[2] <- acc_OLSDW
+ResultadosModPred$Sensitivity[2] <- sens_OLSDW
+ResultadosModPred$Specificity [2]<- spec_OLSDW
+
+
+###############################################################
+################### Arbol de decisión #########################
+###############################################################
+
+# Dividimos la base en train y test
+set.seed(1234)
+train_index <- createDataPartition(train_final$IngresoPerCapita, p = .8)$Resample1
+train_df <- train_final[train_index,]
+test <- train_final[-train_index,]
+
+# Creamos las particiones para hacer validación cruzada
+cv5 <- trainControl(number = 5, method = "cv")
+
+modelo1 <- train(modelo,
+                 data = train_df, 
+                 method = "rpart", 
+                 trControl = cv5)
+
+fancyRpartPlot(modelo1$finalModel)
+
+y_hat_insample1 = predict(modelo1, newdata = train_df)
+test$IngresoPredTest = predict(modelo1, newdata = test)
+
+test <- test %>%mutate(Pobrearb=ifelse(IngresoPredTest < Lp, 1, 0))
+test<-test %>% mutate(Pobrearb=factor(Pobrearb,
+                                      levels=c(1,0),
+                                      labels=c("Pobre","No Pobre")))
+
+#gaurdamos métricas en la tabla de resultados, podemos usar matrizdeconfusión de nuevo, pero en este caso me pareció más comodo
+#de esta forma en función  del tabla que se está construyendo
+library(MLmetrics)
+acc_arbol <- Accuracy(test$PobreReg, test$Pobrearb)
+sens_arbol <- Sensitivity(test$PobreReg, test$Pobrearb)
+spec_arbol <- Specificity(test$PobreReg, test$Pobrearb)
+acc_arbol
+sens_arbol
+spec_arbol
+
+ResultadosModPred$Accuracy[3] <- acc_arbol
+ResultadosModPred$Sensitivity[3] <- sens_arbol
+ResultadosModPred$Specificity [3]<- spec_arbol
+
+
+###############################################################
+##################### Random Forest ###########################
+###############################################################
+
+#Hacemos de nuevo particion para data train y test
+
+#Partimos la muestra en 2 para los procesos de entrenamiento y testeo
+Particion <- createDataPartition(train_final$PobreReg , p = 0.7)[[1]]
+length(Particion)
+trainingbf = train_final[Particion,]
+testing <- train_final[-Particion,]
+
+#lamentablemente mi PC se bloquea cuando arranco randomforest, me toca resamplear ):
+
+nuevatrain <- trainingbf[sample(nrow(trainingbf), nrow(trainingbf)*0.3), ]
+
+
+# Creamos una grilla para tunear el random forest
+tunegrid_rf <- expand.grid(mtry = c(3, 5, 10), 
+                           min.node.size = c(10, 30, 50,
+                                             70, 100),
+                           splitrule = "variance")
+
+cv3 <- trainControl(number = 3, method = "cv")
+
+
+modelo2 <- train(modelo ,
+                 data = nuevatrain, 
+                 method = "ranger", 
+                 trControl = cv3,
+                 metric = 'RMSE', 
+                 tuneGrid = tunegrid_rf)
+
+# Comando manual  - Nos muestra que 5 predictores presentan la menor RMSE - es la profundidad óptima
+ggplot(modelo2$results, aes(x = min.node.size, y = RMSE, 
+                            color = as.factor(mtry))) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Resultados del grid search",
+       x = "Mínima cantidad de observaciones por hoja",
+       y = "RMSE (Cross-Validation)") +
+  scale_color_discrete("Número de predictores seleccionados al azar") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+# El mejor modelo es aquel que tiene mtry = 5 y min.node.size = aprox 30
+y_hat_insample2 = predict(modelo2, newdata = nuevatrain)
+y_hat_outsample2 = predict(modelo2, newdata = testing)
+
+evaltest <- testing
+evaltest$PredIncome = predict(modelo2, newdata = testing)
+evaltest <- evaltest %>%mutate(linealLP1=ifelse(PredIncome < Lp, 1, 0))
+evaltest <- evaltest %>% mutate(linealLP1=factor(linealLP1,levels=c(1,0),labels=c("Pobre","No Pobre")))
+
+#Vemos parámetros
+
+acc_RF <- Accuracy(evaltest$PobreReg, evaltest$linealLP1)
+sens_RF <- Sensitivity(evaltest$PobreReg, evaltest$linealLP1)
+spec_RF <- Specificity(evaltest$PobreReg, evaltest$linealLP1)
+acc_RF
+sens_RF
+spec_RF
+nueva_fila <- data.frame(Modelo = "Random Forest", Accuracy = acc_RF, Sensitivity = sens_RF, Specificity = spec_RF)
+ResultadosModPred4 <- rbind(ResultadosModPred, nueva_fila)
+rm(ResultadosModPred)
+ResultadosModPred4$Accuracy[4] <- acc_RF
+ResultadosModPred4$Sensitivity[4] <- sens_RF
+ResultadosModPred4$Specificity [4]<- spec_RF
+
+
+#Ejecutamos modelo para la data de Kaggle
+
+FinalRF <- test_final
+FinalRF$PredIncome = predict(modelo2, newdata = test_final)
+FinalRF <- FinalRF %>%mutate(linealLP1=ifelse(PredIncome < Lp, 1, 0))
+FinalRF <- rename(FinalRF, pobre = linealLP1)
+FinalRF <-subset(FinalRF, select = c("id","pobre")) 
+write.csv(FinalRF, file = "C:/Users/Yilmer Palacios/Desktop/Taller 2 R/regression_a2.csv", row.names = FALSE)
+prop.table(table(FinalRF$pobre))
+
+
+#finalmente creamos la tabla para el documento
+
+ResultadosModPredF <- ResultadosModPred4
+ResultadosModPredF$Accuracy <- as.numeric(ResultadosModPredF$Accuracy )
+ResultadosModPredF$Sensitivity <- as.numeric(ResultadosModPredF$Sensitivity )
+ResultadosModPredF$Specificity <- as.numeric(ResultadosModPredF$Specificity )
+ResultadosModPredF$Accuracy <- round(ResultadosModPredF$Accuracy,4)
+ResultadosModPredF$Sensitivity <- round(ResultadosModPredF$Sensitivity,4)
+ResultadosModPredF$Specificity <- round(ResultadosModPredF$Specificity,4)
+
+write.xlsx(ResultadosModPredF, "ResultadosReg.xlsx", rowNames = FALSE)
+
+
